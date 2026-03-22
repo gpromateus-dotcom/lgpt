@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>LGPT — IA Conversacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const app=initializeApp({apiKey:"AIzaSyBs-9uXDZdbiqbHvI82KZOKFIVrKYs3zwg",authDomain:"lgpt-aa675.firebaseapp.com",projectId:"lgpt-aa675",appId:"1:102000200396:web:867d9bb07d63d943821069"});
+const auth=getAuth(app);
+const provider=new GoogleAuthProvider();
+window.__lgpt_signIn=async()=>{try{const r=await signInWithPopup(auth,provider);return r.user;}catch(e){console.warn(e.message);return null;}};
+window.__lgpt_signOut=()=>signOut(auth);
+onAuthStateChanged(auth,u=>{window.__lgpt_user=u||null;window.dispatchEvent(new CustomEvent("lgpt:authchange",{detail:u||null}));});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#050505;--s1:#0e0e0e;--s2:#141414;--bd:#1c1c1c;--p:#8B5CF6;--pl:#a78bfa;--t:#e4e4e4;--tm:#555}
+html,body{background:var(--bg);color:var(--t);font-family:'Inter',sans-serif;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#222;border-radius:3px}
+#app{display:flex;height:100dvh;overflow:hidden}
+#sidebar{width:260px;min-width:260px;background:var(--s1);border-right:1px solid var(--bd);display:flex;flex-direction:column;transition:transform .28s cubic-bezier(.4,0,.2,1);z-index:50}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#topbar{height:54px;flex-shrink:0;border-bottom:1px solid var(--bd);background:rgba(5,5,5,.95);backdrop-filter:blur(16px);display:flex;align-items:center;padding:0 .875rem;gap:.6rem}
+#tabs{display:flex;border-bottom:1px solid var(--bd);background:var(--bg);overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+#tabs::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:.4rem;padding:.7rem .875rem;font-size:.78rem;font-family:'Inter',sans-serif;color:var(--tm);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s}
+.tab-btn.active{color:var(--pl);border-bottom-color:var(--p)}
+.tab-btn:hover:not(.active){color:#888}
+.tab-panel{display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.tab-panel.active{display:flex}
+#messages{flex:1;overflow-y:auto;padding:1.25rem .875rem;display:flex;flex-direction:column;gap:1rem}
+.bubble-user{align-self:flex-end;max-width:82%;background:linear-gradient(135deg,#8B5CF6,#7c3aed);color:#fff;border-radius:18px 18px 4px 18px;padding:.7rem 1rem;font-size:.875rem;line-height:1.55;box-shadow:0 4px 22px rgba(139,92,246,.28);word-break:break-word;animation:msgIn .2s ease}
+.bubble-ai{align-self:flex-start;max-width:88%;background:var(--s2);border:1px solid var(--bd);border-radius:4px 18px 18px 18px;padding:.75rem 1rem;font-size:.85rem;line-height:1.65;word-break:break-word;animation:msgIn .2s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.prose{color:#ccc}.prose p{margin:0 0 .6rem}.prose p:last-child{margin-bottom:0}
+.prose h1,.prose h2,.prose h3{font-family:'Syne',sans-serif;color:#f0f0f0;margin:.8rem 0 .35rem}
+.prose h1{font-size:1.1rem}.prose h2{font-size:.95rem}.prose h3{font-size:.875rem}
+.prose ul,.prose ol{padding-left:1.25rem;margin:.35rem 0}.prose li{margin:.15rem 0}
+.prose strong{color:#f0f0f0}.prose em{color:#aaa}.prose a{color:var(--pl);text-decoration:underline}
+.prose blockquote{border-left:3px solid var(--p);padding-left:.75rem;color:#777;font-style:italic;margin:.5rem 0}
+.prose code:not(pre code){background:#1a1a2e;color:var(--pl);padding:.1em .38em;border-radius:5px;font-size:.8em;font-family:'Fira Code','Courier New',monospace}
+.prose pre{background:#0d0d1a!important;border:1px solid #1e1e3a;border-radius:10px;margin:.6rem 0;overflow:auto;position:relative}
+.prose pre code{font-size:.78em;padding:1rem!important}
+.prose table{width:100%;border-collapse:collapse;font-size:.8em}
+.prose th{background:#1a1a1a;padding:.35rem .6rem;color:#ddd;text-align:left}
+.prose td{padding:.35rem .6rem;border-top:1px solid #1a1a1a}
+.code-wrap{position:relative}
+.copy-btn{position:absolute;top:.5rem;right:.5rem;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.3);color:var(--pl);font-size:.7rem;padding:.2rem .5rem;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;z-index:2}
+.copy-btn:hover{background:rgba(139,92,246,.4)}
+.typing{display:flex;align-items:center;gap:4px;padding:.5rem .75rem}
+.typing span{width:7px;height:7px;background:var(--p);border-radius:50%;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+.cursor-piscar{display:inline-block;animation:piscar .7s infinite;color:var(--p);font-size:1.1rem}
+@keyframes piscar{0%,100%{opacity:1}50%{opacity:0}}
+#input-area{border-top:1px solid var(--bd);padding:.75rem .875rem;padding-bottom:calc(.75rem + env(safe-area-inset-bottom));background:rgba(5,5,5,.97);backdrop-filter:blur(12px);flex-shrink:0}
+#input-wrap{display:flex;align-items:flex-end;gap:.5rem;background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:.5rem .5rem .5rem .875rem;transition:border-color .2s}
+#input-wrap:focus-within{border-color:rgba(139,92,246,.5);box-shadow:0 0 0 3px rgba(139,92,246,.08)}
+#user-input{flex:1;background:transparent;border:none;outline:none;color:var(--t);font-family:'Inter',sans-serif;font-size:.875rem;resize:none;max-height:120px;line-height:1.5;padding:.2rem 0}
+#user-input::placeholder{color:#444}
+#send-btn{width:36px;height:36px;background:linear-gradient(135deg,#8B5CF6,#7c3aed);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:opacity .2s,transform .1s}
+#send-btn:disabled{opacity:.4;cursor:not-allowed}
+#send-btn:active:not(:disabled){transform:scale(.93)}
+.attach-btn{width:32px;height:32px;background:none;border:none;color:var(--tm);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:color .2s;flex-shrink:0}
+.attach-btn:hover{color:var(--pl)}
+#file-preview{display:none;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem}
+.file-chip{background:#1a1a2e;border:1px solid rgba(139,92,246,.3);border-radius:8px;padding:.25rem .6rem;font-size:.75rem;color:var(--pl);display:flex;align-items:center;gap:.4rem}
+.file-chip button{background:none;border:none;color:#777;cursor:pointer;font-size:.8rem;padding:0}
+#limit-banner{background:rgba(139,92,246,.08);border-top:1px solid rgba(139,92,246,.2);padding:.5rem .875rem;text-align:center;font-size:.75rem;color:var(--pl);flex-shrink:0;display:none}
+.sidebar-hdr{padding:.875rem .75rem .5rem;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:.5rem}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:-.03em;color:#f5f5f5}
+.logo span{color:var(--pl)}
+.new-btn{margin:.6rem .75rem;padding:.55rem .875rem;background:rgba(139,92,246,.1);border:1px dashed rgba(139,92,246,.3);border-radius:10px;color:var(--pl);font-family:'Inter',sans-serif;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .2s;width:calc(100% - 1.5rem)}
+.new-btn:hover{background:rgba(139,92,246,.2)}
+#conv-list{flex:1;overflow-y:auto;padding:0 .5rem}
+.conv-item{padding:.55rem .7rem;border-radius:9px;cursor:pointer;font-size:.78rem;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:space-between;gap:.4rem;margin-bottom:2px;transition:all .15s}
+.conv-item:hover{background:#161616;color:#ccc}
+.conv-item.active{background:rgba(139,92,246,.1);color:#c4b5fd;border:1px solid rgba(139,92,246,.2)}
+.conv-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-del{opacity:0;font-size:.7rem;color:#555;padding:2px 4px;border-radius:4px;transition:all .15s;background:none;border:none;cursor:pointer;flex-shrink:0}
+.conv-item:hover .conv-del{opacity:1;color:#f87171}
+#user-sec{padding:.75rem;border-top:1px solid var(--bd)}
+.user-card{display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;border-radius:10px;background:#111;border:1px solid var(--bd)}
+.user-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#8B5CF6,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:#fff;flex-shrink:0;overflow:hidden}
+.user-av img{width:100%;height:100%;object-fit:cover}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:.78rem;color:#e5e5e5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-plan{font-size:.68rem;color:#555}
+.login-btn{width:100%;padding:.6rem;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:10px;color:var(--pl);font-size:.8rem;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:all .2s}
+.login-btn:hover{background:rgba(139,92,246,.2)}
+.logout-btn{background:none;border:none;color:#444;cursor:pointer;padding:4px;border-radius:6px;transition:color .2s}
+.logout-btn:hover{color:#f87171}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:40}
+#welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.25rem;padding:2rem;text-align:center}
+.w-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:2.75rem;letter-spacing:-.04em;text-shadow:0 0 40px rgba(139,92,246,.4)}
+.w-logo span{color:var(--pl)}
+.w-sub{color:#555;font-size:.875rem;max-width:300px;line-height:1.6}
+.suggestions{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;width:100%;max-width:460px}
+.sug{background:var(--s1);border:1px solid var(--bd);border-radius:11px;padding:.65rem .8rem;font-size:.75rem;color:#666;cursor:pointer;text-align:left;transition:all .2s;line-height:1.4;font-family:'Inter',sans-serif}
+.sug:hover{border-color:rgba(139,92,246,.4);color:#c4b5fd;background:rgba(139,92,246,.05)}
+.panel-inner{flex:1;overflow-y:auto;padding:1.25rem .875rem;display:flex;flex-direction:column;gap:1rem}
+.panel-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:1.25rem;display:flex;flex-direction:column;gap:.875rem}
+.panel-label{font-size:.72rem;color:#555;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.2rem}
+.panel-input{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:.65rem .875rem;color:var(--t);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;transition:border-color .2s}
+.panel-input:focus{border-color:rgba(139,92,246,.5)}
+.panel-select{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:.65rem .875rem;color:var(--t);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23555' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .875rem center;transition:border-color .2s}
+.panel-select:focus{border-color:rgba(139,92,246,.5)}
+.panel-textarea{width:100%;background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:.65rem .875rem;color:var(--t);font-family:'Inter',sans-serif;font-size:.85rem;outline:none;resize:vertical;min-height:100px;transition:border-color .2s;line-height:1.5}
+.panel-textarea:focus{border-color:rgba(139,92,246,.5)}
+.btn-primary{padding:.65rem 1.25rem;background:linear-gradient(135deg,#8B5CF6,#7c3aed);border:none;border-radius:11px;color:#fff;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:opacity .2s,transform .1s;width:100%}
+.btn-primary:hover{opacity:.9}.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{padding:.55rem 1rem;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);border-radius:9px;color:var(--pl);font-family:'Inter',sans-serif;font-size:.8rem;cursor:pointer;display:flex;align-items:center;gap:.4rem;transition:all .2s}
+.btn-secondary:hover{background:rgba(139,92,246,.2)}
+.output-block{background:#0d0d1a;border:1px solid #1e1e3a;border-radius:12px;padding:1rem;font-size:.82rem;color:#ccc;line-height:1.6;min-height:60px;position:relative}
+.char-counter{font-size:.7rem;color:#444;text-align:right;margin-top:.25rem}
+.loading-text{color:var(--pl);font-size:.82rem;display:flex;align-items:center;gap:.5rem;padding:.5rem 0}
+.spinner{width:14px;height:14px;border:2px solid rgba(139,92,246,.3);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--p);color:#fff;padding:.6rem 1.25rem;border-radius:20px;font-size:.82rem;z-index:9999;animation:toastIn .3s ease;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.detector-circle{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.verdict-badge{display:inline-flex;align-items:center;padding:.3rem .875rem;border-radius:20px;font-size:.8rem;font-weight:600;font-family:'Syne',sans-serif}
+.score-section{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:.75rem;display:flex;flex-direction:column;gap:.4rem}
+.score-title{font-size:.7rem;color:#555;text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.score-item{font-size:.8rem;color:#aaa;padding:.25rem 0;border-bottom:1px solid var(--bd)}
+.score-item:last-child{border-bottom:none}
+.suspect-chip{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:.4rem .7rem;font-size:.78rem;color:#fca5a5;font-style:italic;margin:.2rem 0}
+iframe.preview{width:100%;flex:1;border:none;border-radius:0;background:#fff}
+.hist-item{background:var(--s2);border:1px solid var(--bd);border-radius:9px;padding:.6rem .875rem;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.hist-item:hover{border-color:rgba(139,92,246,.3);background:rgba(139,92,246,.05)}
+.hist-title{font-size:.78rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.hist-lang{font-size:.68rem;color:var(--pl);background:rgba(139,92,246,.1);padding:.1rem .4rem;border-radius:5px;flex-shrink:0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+@media(max-width:640px){
+  #sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #overlay.show{display:block}
+  .suggestions{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr}
+}
+.img-result{width:100%;border-radius:12px;margin:.5rem 0;display:block}
+.img-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.75rem}
+.img-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer;transition:opacity .2s}
+.img-thumb:hover{opacity:.8}
+.fullscreen-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fullscreen-overlay img{max-width:95vw;max-height:95vh;border-radius:12px;object-fit:contain}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-hdr">
+      <div class="logo">L<span>G</span>PT</div>
+    </div>
+    <button class="new-btn" onclick="newChat()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Nova conversa
+    </button>
+    <div style="padding:.2rem .75rem .35rem;font-size:.67rem;color:#333;font-weight:500;letter-spacing:.08em;text-transform:uppercase">Histórico</div>
+    <div id="conv-list"></div>
+    <div id="user-sec"></div>
+  </aside>
+
+  <div id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- MAIN -->
+  <main id="main">
+    <div id="topbar">
+      <button onclick="toggleSidebar()" style="background:none;border:none;color:#555;cursor:pointer;padding:4px;border-radius:8px;transition:color .2s" onmouseover="this.style.color='#ccc'" onmouseout="this.style.color='#555'">
+        <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:#f5f5f5">L<span style="color:var(--pl)">G</span>PT</div>
+      <div style="flex:1"></div>
+      <div style="font-size:.68rem;color:#444;background:#111;border:1px solid var(--bd);padding:.18rem .55rem;border-radius:20px">Gemini 2.5 Flash</div>
+    </div>
+
+    <!-- TABS -->
+    <div id="tabs">
+      <button class="tab-btn active" data-tab="chat" onclick="switchTab('chat',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chat
+      </button>
+      <button class="tab-btn" data-tab="code" onclick="switchTab('code',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Código
+      </button>
+      <button class="tab-btn" data-tab="apps" onclick="switchTab('apps',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Apps
+      </button>
+      <button class="tab-btn" data-tab="slides" onclick="switchTab('slides',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="16" x2="12" y2="16"/></svg>Slides
+      </button>
+      <button class="tab-btn" data-tab="image" onclick="switchTab('image',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Imagem
+      </button>
+      <button class="tab-btn" data-tab="humanize" onclick="switchTab('humanize',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Humanizar
+      </button>
+      <button class="tab-btn" data-tab="detect" onclick="switchTab('detect',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Detetar IA
+      </button>
+      <button class="tab-btn" data-tab="summarize" onclick="switchTab('summarize',this)">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Resumir
+      </button>
+    </div>
+
+    <!-- CHAT TAB -->
+    <div id="tab-chat" class="tab-panel active" style="position:relative">
+      <div id="limit-banner"></div>
+      <div id="chat-container" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden">
+        <div id="welcome">
+          <div class="w-logo">L<span>G</span>PT</div>
+          <p class="w-sub">O teu assistente IA pessoal. Pergunta o que quiseres.</p>
+          <div class="suggestions">
+            <button class="sug" onclick="useSuggestion(this)">Explica inteligência artificial de forma simples</button>
+            <button class="sug" onclick="useSuggestion(this)">Escreve um email profissional de apresentação</button>
+            <button class="sug" onclick="useSuggestion(this)">Cria um plano de estudo para uma semana</button>
+            <button class="sug" onclick="useSuggestion(this)">Dá-me 5 ideias criativas para um projeto</button>
+          </div>
+        </div>
+        <div id="messages" style="display:none"></div>
+      </div>
+      <div id="file-preview"></div>
+      <div id="input-area">
+        <div id="input-wrap">
+          <button class="attach-btn" onclick="document.getElementById('file-input').click()" title="Anexar ficheiro">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.txt,.csv,.md,.js,.py,.html,.css,.json" onchange="handleFiles(this.files)"/>
+          <textarea id="user-input" placeholder="Escreve uma mensagem…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button id="send-btn" onclick="sendMessage()">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+        <p style="text-align:center;font-size:.62rem;color:#222;margin:.35rem 0 0">LGPT pode cometer erros. Verifica informações importantes.</p>
+      </div>
+    </div>
+
+    <!-- CODE TAB -->
+    <div id="tab-code" class="tab-panel">
+      <div class="panel-inner">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Linguagem</div>
+            <select class="panel-select" id="code-lang">
+              <option>HTML/CSS/JS</option><option>Python</option><option>JavaScript</option>
+              <option>TypeScript</option><option>React</option><option>CSS</option>
+              <option>SQL</option><option>PHP</option><option>Java</option>
+            </select>
+          </div>
+          <div>
+            <div class="panel-label">Tipo de Output</div>
+            <select class="panel-select" id="code-type">
+              <option>Código completo e funcional</option><option>Apenas a função</option>
+              <option>Com comentários detalhados</option><option>Versão otimizada</option>
+            </select>
+          </div>
+          <div>
+            <div class="panel-label">Descreve o que queres</div>
+            <textarea class="panel-textarea" id="code-prompt" placeholder="Ex: Um jogo Snake com dark mode e pontuação..." style="min-height:80px"></textarea>
+          </div>
+          <button class="btn-primary" onclick="generateCode()" id="code-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            Gerar Código
+          </button>
+        </div>
+        <div id="code-loading" style="display:none" class="loading-text"><div class="spinner"></div><span id="code-loading-text">A gerar...</span></div>
+        <div id="code-result" style="display:none" class="panel-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+            <span id="code-lang-badge" style="font-size:.72rem;color:var(--pl);background:rgba(139,92,246,.1);padding:.2rem .6rem;border-radius:6px"></span>
+            <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+              <button class="btn-secondary" onclick="copyCode()">📋 Copiar</button>
+              <button class="btn-secondary" onclick="downloadCode()">⬇️ Download</button>
+              <button class="btn-secondary" onclick="improveCode()">✨ Melhorar</button>
+            </div>
+          </div>
+          <div id="code-output" class="prose"></div>
+          <div id="code-explanation" style="font-size:.8rem;color:#888;line-height:1.6;border-top:1px solid var(--bd);padding-top:.75rem;margin-top:.25rem"></div>
+        </div>
+        <div id="code-history" style="display:none">
+          <div class="panel-label" style="margin-bottom:.4rem">Histórico recente</div>
+          <div id="code-hist-list" style="display:flex;flex-direction:column;gap:.3rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPS TAB -->
+    <div id="tab-apps" class="tab-panel">
+      <div class="panel-inner" id="apps-input-view">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Tipo de App</div>
+            <select class="panel-select" id="app-type">
+              <option>Site/Landing Page</option><option>App Web Completa</option>
+              <option>Dashboard</option><option>Loja Online</option>
+              <option>Portfolio</option><option>Jogo</option>
+              <option>Calculadora/Ferramenta</option><option>To-Do / Lista</option>
+            </select>
+          </div>
+          <div>
+            <div class="panel-label">Descreve a tua app</div>
+            <textarea class="panel-textarea" id="app-prompt" placeholder="Ex: Uma loja de ténis chamada SneakerPT com produtos, carrinho e checkout..." style="min-height:90px"></textarea>
+          </div>
+          <button class="btn-primary" onclick="generateApp()" id="app-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            Criar App
+          </button>
+        </div>
+        <div id="app-loading" style="display:none" class="loading-text"><div class="spinner"></div><span id="app-loading-text">A criar app...</span></div>
+      </div>
+      <iframe id="app-preview" class="preview" style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+      <div id="app-actions" style="display:none;padding:.75rem .875rem;border-top:1px solid var(--bd);background:var(--bg);display:none;gap:.5rem;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="downloadApp()">⬇️ Download HTML</button>
+        <button class="btn-secondary" onclick="improveApp()">✨ Melhorar App</button>
+        <button class="btn-secondary" onclick="showNetlifyInstructions()">🚀 Deploy Netlify</button>
+        <button class="btn-secondary" onclick="resetApp()">🔄 Nova App</button>
+      </div>
+    </div>
+
+    <!-- SLIDES TAB -->
+    <div id="tab-slides" class="tab-panel">
+      <div class="panel-inner" id="slides-input-view">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Tema da Apresentação</div>
+            <input class="panel-input" id="slides-topic" placeholder="Ex: Benefícios do desporto para jovens"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <div class="panel-label">Número de slides</div>
+              <select class="panel-select" id="slides-count">
+                <option>5</option><option>6</option><option>7</option><option>8</option><option>10</option>
+              </select>
+            </div>
+            <div>
+              <div class="panel-label">Estilo Visual</div>
+              <select class="panel-select" id="slides-style">
+                <option>Dark Premium</option><option>Profissional</option><option>Criativo</option><option>Minimalista</option><option>Colorido</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="generateSlides()" id="slides-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Criar Slides
+          </button>
+        </div>
+        <div id="slides-loading" style="display:none" class="loading-text"><div class="spinner"></div><span id="slides-loading-text">A criar slides...</span></div>
+      </div>
+      <iframe id="slides-preview" class="preview" style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+      <div id="slides-actions" style="display:none;padding:.75rem .875rem;border-top:1px solid var(--bd);background:var(--bg);gap:.5rem;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="downloadSlides()">⬇️ Download HTML</button>
+        <button class="btn-secondary" onclick="fullscreenSlides()">⛶ Fullscreen</button>
+        <button class="btn-secondary" onclick="improveSlides()">✨ Melhorar</button>
+        <button class="btn-secondary" onclick="resetSlides()">🔄 Novos Slides</button>
+      </div>
+    </div>
+
+    <!-- IMAGE TAB -->
+    <div id="tab-image" class="tab-panel">
+      <div class="panel-inner">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Descreve a imagem em português</div>
+            <textarea class="panel-textarea" id="image-prompt" placeholder="Ex: Um lobo a uivar para a lua numa floresta com névoa azul cinematográfica..." style="min-height:80px"></textarea>
+          </div>
+          <button class="btn-primary" onclick="generateImage()" id="image-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Gerar Imagem
+          </button>
+          <div id="image-loading" style="display:none" class="loading-text"><div class="spinner"></div><span id="image-loading-text">A gerar imagem...</span></div>
+        </div>
+        <div id="image-result" style="display:none" class="panel-card">
+          <img id="image-output" class="img-result" alt="Imagem gerada"/>
+          <div style="display:flex;gap:.4rem">
+            <button class="btn-secondary" onclick="downloadImage()">⬇️ Download</button>
+            <button class="btn-secondary" onclick="generateImage()">🔄 Gerar outra</button>
+          </div>
+        </div>
+        <div id="image-gallery" style="display:none">
+          <div class="panel-label" style="margin-bottom:.4rem">Imagens desta sessão</div>
+          <div class="img-grid" id="img-grid-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUMANIZE TAB -->
+    <div id="tab-humanize" class="tab-panel">
+      <div class="panel-inner">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Intensidade</div>
+            <select class="panel-select" id="humanize-intensity">
+              <option value="subtil">Subtil</option>
+              <option value="equilibrado" selected>Equilibrado</option>
+              <option value="maximo">Máximo</option>
+            </select>
+          </div>
+          <div>
+            <div class="panel-label">Texto a humanizar</div>
+            <textarea class="panel-textarea" id="humanize-input" placeholder="Cola aqui o texto gerado por IA..." style="min-height:120px" oninput="updateCounter('humanize-input','h-counter',100000)"></textarea>
+            <div class="char-counter" id="h-counter">0 / 100000</div>
+          </div>
+          <button class="btn-primary" onclick="humanizeText()" id="humanize-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Humanizar Texto
+          </button>
+          <div id="humanize-loading" style="display:none" class="loading-text"><div class="spinner"></div>A reescrever como humano...</div>
+        </div>
+        <div id="humanize-result" style="display:none" class="panel-card">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.78rem;color:var(--pl);font-weight:500">✅ Texto humanizado</span>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn-secondary" onclick="copyHumanized()">📋 Copiar</button>
+              <button class="btn-secondary" onclick="document.getElementById('humanize-result').style.display='none'">✕ Limpar</button>
+            </div>
+          </div>
+          <div id="humanize-output" style="font-size:.85rem;color:#ccc;line-height:1.7;white-space:pre-wrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETECT TAB -->
+    <div id="tab-detect" class="tab-panel">
+      <div class="panel-inner">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Texto a analisar</div>
+            <textarea class="panel-textarea" id="detect-input" placeholder="Cola aqui o texto que queres analisar..." style="min-height:120px" oninput="updateCounter('detect-input','d-counter',100000)"></textarea>
+            <div class="char-counter" id="d-counter">0 / 100000</div>
+          </div>
+          <button class="btn-primary" onclick="detectAI()" id="detect-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Analisar Texto
+          </button>
+          <div id="detect-loading" style="display:none" class="loading-text"><div class="spinner"></div>A analisar padrões de escrita...</div>
+        </div>
+        <div id="detect-result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- SUMMARIZE TAB -->
+    <div id="tab-summarize" class="tab-panel">
+      <div class="panel-inner">
+        <div class="panel-card">
+          <div>
+            <div class="panel-label">Texto a resumir</div>
+            <textarea class="panel-textarea" id="summarize-input" placeholder="Cola aqui o texto que queres resumir..." style="min-height:120px" oninput="updateCounter('summarize-input','s-counter',100000)"></textarea>
+            <div class="char-counter" id="s-counter">0 / 100000</div>
+          </div>
+          <button class="btn-primary" onclick="summarizeText()" id="summarize-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Resumir
+          </button>
+          <div id="summarize-loading" style="display:none" class="loading-text"><div class="spinner"></div>A resumir o texto...</div>
+        </div>
+        <div id="summarize-result" style="display:none" class="panel-card">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:.78rem;color:var(--pl);font-weight:500">📄 Resumo</span>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn-secondary" onclick="copySummary()">📋 Copiar</button>
+              <button class="btn-secondary" onclick="document.getElementById('summarize-result').style.display='none'">✕ Limpar</button>
+            </div>
+          </div>
+          <div id="summarize-output" class="prose"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const GEMINI_KEY='AIzaSyBtLoxq3OdJlAKAAqhkJFpXKGdq7H-oSvE';
+const GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key='+GEMINI_KEY;
+
+// ── Gemini API ──────────────────────────────────────────────────────────
+async function callGemini(msgs, systemPrompt='') {
+  const contents=[];
+  if(systemPrompt){
+    contents.push({role:'user',parts:[{text:systemPrompt}]});
+    contents.push({role:'model',parts:[{text:'Entendido.'}]});
+  }
+  msgs.forEach(m=>{
+    contents.push({role:m.role==='user'?'user':'model',parts:m.parts||[{text:m.content}]});
+  });
+  const res=await fetch(GEMINI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents,generationConfig:{temperature:.9,maxOutputTokens:8192}})});
+  const data=await res.json();
+  if(data.error)throw new Error(data.error.message);
+  return data.candidates[0].content.parts[0].text;
+}
+
+// ── State ──────────────────────────────────────────────────────────────
+let currentConvId=null;
+let convs=JSON.parse(localStorage.getItem('lgpt_convs')||'{}');
+let history=[];
+let currentUser=null;
+let attachedFiles=[];
+let currentCode='';
+let currentCodeLang='html';
+let currentAppHtml='';
+let currentSlidesHtml='';
+let imageHistory=[];
+let codeHistory=[];
+
+// System prompts
+const SP_CHAT=`Chamas-te LGPT. Respondes SEMPRE em Português de Portugal PT-PT. Nunca dizes que és o Gemini ou da Google. Tens personalidade própria: direto, inteligente, útil, às vezes bem-humorado. Usas Markdown quando adequado. Dás respostas completas. Quando não sabes algo dizes que não sabes. Código em inglês, explicação em PT-PT.`;
+const SP_CODE=`És o melhor programador full stack do mundo. Regras: 1) O código funciona SEMPRE à primeira, sem erros. 2) Para HTML/CSS/JS crias interfaces deslumbrantes com dark mode, gradientes, glassmorphism, animações suaves. 3) Para jogos usas canvas com física realista, menu, pontuação, game over, highscore em localStorage. 4) Para apps web incluis loading states, error handling, feedback visual, responsividade mobile. 5) Para Python incluis type hints e docstrings. 6) Respondes em PT-PT, código em inglês. 7) Após o código explicas brevemente. 8) Nunca geras código incompleto. Formata o código num bloco de código markdown com a linguagem correta.`;
+const SP_APPS=`És o melhor desenvolvedor de apps web do mundo. Crias apps completas num único HTML auto-contido. Regras: 1) Funciona imediatamente no browser. 2) Design premium: fundo escuro, roxo #8B5CF6, glassmorphism, gradientes, Google Fonts via CDN. 3) Totalmente responsiva mobile. 4) Micro-interações em tudo. 5) Inclui sempre loading, empty states, erros amigáveis. 6) Resultado indistinguível de app real. Devolve APENAS o HTML completo sem markdown sem backticks.`;
+const SP_SLIDES=`Crias apresentações HTML5 impressionantes num único ficheiro. Regras: 1) Cada slide é div.slide, primeiro tem class='slide active'. CSS: .slide{display:none;position:absolute;inset:0} .slide.active{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4rem;animation:slideIn 0.4s ease} @keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}. 2) Design premium com gradientes. 3) Navegação com botões e teclas seta. 4) Barra de progresso no topo. 5) Contador de slides. 6) TODOS os slides com conteúdo rico, nunca brancos. 7) Sem fontes externas. Devolve APENAS o HTML completo sem markdown sem backticks.`;
+const SP_HUMANIZE=(intensity)=>`Reescreves texto como humano português real com intensidade ${intensity}. TODAS estas técnicas: 1) Voz única com personalidade (cínico, entusiasmado ou irreverente). 2) Sintaxe quebrada, frases que começam com E ou Mas. 3) Especificidade: 'li algures' em vez de 'estudos mostram'. 4) Ritmo caótico: frases curtas misturadas com longas. 5) Dúvida real: 'não tenho bem a certeza'. 6) Referências portuguesas específicas. 7) Autocorreção visível. 8) Parágrafos assimétricos. 9) PALAVRAS PROIBIDAS: crucial, fundamental, essencial, paradigma, robusto, otimizar, alavancar, sinergias, holístico, proativo, inovador, transformador. 10) Fim abrupto sem conclusão. 11) PROIBIDO ABSOLUTAMENTE: listas com -, *, •, números. Tudo em parágrafos. Resultado deve dar 0-15% em detetores. Devolve APENAS o texto.`;
+const SP_DETECT=`Analisa o texto e responde APENAS com JSON válido sem markdown sem backticks: {"score":0,"veredicto":"Humano","confianca":0,"justificacao":["razão 1"],"trechos_suspeitos":["trecho 1"],"padroes_ia":["padrão 1"],"pontos_humanos":["ponto 1"],"estilo":"descritivo","formalidade":"Semi-formal","recomendacao":"conselho"}. score=0 a 100 (0=humano,100=IA). veredicto é um de: Humano, Provavelmente Humano, Incerto, Provavelmente IA, IA.`;
+const SP_SUMMARIZE=`Recebes um texto e produces um resumo claro e conciso em Português de Portugal. Regras: 1) Resumo entre 20-30% do tamanho original. 2) Mantém os pontos mais importantes. 3) Parágrafos fluidos, sem listas. 4) Tom neutro. 5) Não adiciones informação que não estava no original. 6) Devolve APENAS o resumo.`;
+
+// ── Auth ───────────────────────────────────────────────────────────────
+window.addEventListener('lgpt:authchange',e=>{
+  currentUser=e.detail;
+  renderUserSection();
+  updateLimitBanner();
+});
+
+function getAnonCount(){return parseInt(localStorage.getItem('lgpt_anon')||'0');}
+function incAnonCount(){localStorage.setItem('lgpt_anon',getAnonCount()+1);}
+function isLimited(){return !currentUser&&getAnonCount()>=10;}
+
+function updateLimitBanner(){
+  const b=document.getElementById('limit-banner');
+  if(!currentUser){
+    const r=10-getAnonCount();
+    if(r<=0){
+      b.style.display='block';
+      b.innerHTML='🔒 Limite atingido. <button onclick="doLogin()" style="background:linear-gradient(135deg,#8B5CF6,#7c3aed);border:none;color:#fff;padding:.18rem .65rem;border-radius:7px;cursor:pointer;font-size:.75rem;margin-left:.25rem">Entrar com Google</button>';
+      document.getElementById('send-btn').disabled=true;
+    } else if(r<=3){
+      b.style.display='block';
+      b.innerHTML=`⚡ ${r} mensagem(ns) gratuita(s) restante(s). <button onclick="doLogin()" style="background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);color:var(--pl);padding:.15rem .5rem;border-radius:6px;cursor:pointer;font-size:.72rem;margin-left:.25rem">Login</button>`;
+    } else {
+      b.style.display='none';
+    }
+  } else {
+    b.style.display='none';
+    document.getElementById('send-btn').disabled=false;
+  }
+}
+
+async function doLogin(){try{await window.__lgpt_signIn();}catch(e){}}
+async function doLogout(){try{await window.__lgpt_signOut();}catch(e){}}
+
+function renderUserSection(){
+  const el=document.getElementById('user-sec');
+  if(currentUser){
+    const i=currentUser.displayName?currentUser.displayName.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase():'?';
+    el.innerHTML=`<div class="user-card"><div class="user-av">${currentUser.photoURL?`<img src="${currentUser.photoURL}"/>`:i}</div><div class="user-info"><div class="user-name">${currentUser.displayName||'Utilizador'}</div><div class="user-plan">Pro · Ilimitado</div></div><button class="logout-btn" onclick="doLogout()" title="Sair"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button></div>`;
+  } else {
+    el.innerHTML=`<button class="login-btn" onclick="doLogin()"><svg width="15" height="15" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Entrar com Google</button>`;
+  }
+}
+
+// ── Conversations ──────────────────────────────────────────────────────
+function saveConvs(){localStorage.setItem('lgpt_convs',JSON.stringify(convs));}
+
+function renderConvList(){
+  const el=document.getElementById('conv-list');
+  const ids=Object.keys(convs).sort((a,b)=>(convs[b].updatedAt||0)-(convs[a].updatedAt||0));
+  if(!ids.length){el.innerHTML='<p style="font-size:.72rem;color:#2a2a2a;text-align:center;padding:.875rem">Sem conversas ainda</p>';return;}
+  el.innerHTML=ids.map(id=>`<div class="conv-item${id===currentConvId?' active':''}" onclick="loadConv('${id}')"><span class="conv-title">${esc(convs[id].title||'Nova conversa')}</span><button class="conv-del" onclick="delConv(event,'${id}')">✕</button></div>`).join('');
+}
+
+function newChat(){
+  currentConvId=null;history=[];
+  document.getElementById('messages').style.display='none';
+  document.getElementById('messages').innerHTML='';
+  document.getElementById('welcome').style.display='flex';
+  renderConvList();closeSidebar();
+}
+
+function loadConv(id){
+  currentConvId=id;
+  const c=convs[id];if(!c)return;
+  history=c.messages||[];
+  document.getElementById('welcome').style.display='none';
+  const m=document.getElementById('messages');
+  m.style.display='flex';m.innerHTML='';
+  history.forEach(msg=>{
+    if(msg.role==='user')appendUser(msg.content,false);
+    else appendAI(msg.content,false);
+  });
+  renderConvList();m.scrollTop=m.scrollHeight;closeSidebar();
+}
+
+function delConv(e,id){e.stopPropagation();delete convs[id];saveConvs();if(currentConvId===id)newChat();else renderConvList();}
+
+function createConv(title){
+  const id='c'+Date.now();
+  convs[id]={id,title:title.slice(0,42)+(title.length>42?'…':''),messages:[],updatedAt:Date.now()};
+  currentConvId=id;saveConvs();return id;
+}
+
+function addToConv(role,content){
+  if(!currentConvId)return;
+  convs[currentConvId].messages.push({role,content});
+  convs[currentConvId].updatedAt=Date.now();
+  saveConvs();
+}
+
+// ── Chat UI ────────────────────────────────────────────────────────────
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function appendUser(text,anim=true){
+  document.getElementById('welcome').style.display='none';
+  const m=document.getElementById('messages');
+  m.style.display='flex';
+  const d=document.createElement('div');
+  d.className='bubble-user'+(anim?'':' ');
+  d.textContent=typeof text==='string'?text:'[ficheiro anexado]';
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+
+function appendAI(md,anim=true){
+  const m=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.className='bubble-ai';
+  const prose=document.createElement('div');
+  prose.className='prose';
+  prose.innerHTML=marked.parse(md||'');
+  d.appendChild(prose);
+  prose.querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+  prose.querySelectorAll('pre').forEach(pre=>{
+    const wrap=document.createElement('div');wrap.className='code-wrap';
+    pre.parentNode.insertBefore(wrap,pre);wrap.appendChild(pre);
+    const btn=document.createElement('button');btn.className='copy-btn';btn.textContent='Copiar';
+    btn.onclick=()=>{navigator.clipboard.writeText(pre.querySelector('code').textContent);btn.textContent='✓';setTimeout(()=>btn.textContent='Copiar',2000);};
+    wrap.appendChild(btn);
+  });
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+
+function showTyping(){
+  const m=document.getElementById('messages');
+  const d=document.createElement('div');d.className='bubble-ai';d.id='typing';
+  d.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  m.appendChild(d);m.scrollTop=m.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typing');if(t)t.remove();}
+
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
+function useSuggestion(btn){document.getElementById('user-input').value=btn.textContent;sendMessage();}
+
+// ── Files ──────────────────────────────────────────────────────────────
+function handleFiles(files){
+  Array.from(files).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const b64=e.target.result;
+      attachedFiles.push({name:f.name,type:f.type,base64:b64,size:f.size});
+      renderFilePreviews();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function renderFilePreviews(){
+  const el=document.getElementById('file-preview');
+  if(!attachedFiles.length){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=attachedFiles.map((f,i)=>`<div class="file-chip">${f.type.startsWith('image/')?'🖼':'📄'} ${f.name}<button onclick="removeFile(${i})">✕</button></div>`).join('');
+}
+function removeFile(i){attachedFiles.splice(i,1);renderFilePreviews();}
+
+// ── Send Message ───────────────────────────────────────────────────────
+async function sendMessage(){
+  const input=document.getElementById('user-input');
+  const text=input.value.trim();
+  if(!text&&!attachedFiles.length)return;
+  if(isLimited()){updateLimitBanner();return;}
+  if(!currentConvId)createConv(text||'Conversa com ficheiro');
+  input.value='';input.style.height='auto';
+  document.getElementById('send-btn').disabled=true;
+
+  const files=[...attachedFiles];attachedFiles=[];renderFilePreviews();
+  appendUser(text||'[ficheiro anexado]');
+  if(!currentUser)incAnonCount();
+  updateLimitBanner();
+  showTyping();
+
+  try{
+    const msgs=[...history];
+    let userContent;
+    if(files.length){
+      const parts=[];
+      files.forEach(f=>{
+        if(f.type.startsWith('image/')){
+          const b64=f.base64.split(',')[1];
+          parts.push({inline_data:{mime_type:f.type,data:b64}});
+        } else {
+          const txt=atob(f.base64.split(',')[1]);
+          parts.push({text:`Ficheiro "${f.name}":\n${txt}`});
+        }
+      });
+      if(text)parts.push({text});
+      userContent=parts;
+      msgs.push({role:'user',parts:userContent});
+    } else {
+      userContent=text;
+      msgs.push({role:'user',content:text});
+    }
+
+    const reply=await callGemini(msgs,SP_CHAT);
+    removeTyping();
+    appendAI(reply);
+    history.push({role:'user',content:userContent});
+    history.push({role:'assistant',content:reply});
+    addToConv('user',text||'[ficheiro]');
+    addToConv('assistant',reply);
+    renderConvList();
+  }catch(e){
+    removeTyping();
+    appendAI('❌ Erro: '+e.message+'\n\nTenta novamente.');
+  }
+  document.getElementById('send-btn').disabled=isLimited();
+}
+
+// ── Code Generator ─────────────────────────────────────────────────────
+async function generateCode(){
+  const prompt=document.getElementById('code-prompt').value.trim();
+  if(!prompt)return;
+  const lang=document.getElementById('code-lang').value;
+  const type=document.getElementById('code-type').value;
+  const btn=document.getElementById('code-btn');
+  const loading=document.getElementById('code-loading');
+  const result=document.getElementById('code-result');
+  btn.disabled=true;loading.style.display='flex';result.style.display='none';
+  const msgs=[['A arquitetar...','A programar...','A otimizar...']];
+  const texts=['A arquitetar...','A programar...','A otimizar...'];
+  let ti=0;const int=setInterval(()=>{document.getElementById('code-loading-text').textContent=texts[ti++%texts.length];},1200);
+  try{
+    const reply=await callGemini([{role:'user',content:`Linguagem: ${lang}\nTipo: ${type}\nPedido: ${prompt}`}],SP_CODE);
+    clearInterval(int);
+    const codeMatch=reply.match(/```[\w\s]*\n([\s\S]*?)```/);
+    currentCode=codeMatch?codeMatch[1]:reply;
+    const ext={'HTML/CSS/JS':'html','Python':'py','JavaScript':'js','TypeScript':'ts','React':'tsx','CSS':'css','SQL':'sql','PHP':'php','Java':'java'}[lang]||'txt';
+    currentCodeLang=ext;
+    document.getElementById('code-lang-badge').textContent=lang;
+    const out=document.getElementById('code-output');
+    out.innerHTML=`<pre><code class="language-${ext}">${esc(currentCode)}</code></pre>`;
+    out.querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+    const expMatch=reply.match(/```[\s\S]*```\s*([\s\S]+)$/);
+    document.getElementById('code-explanation').textContent=expMatch?expMatch[1].trim():'';
+    result.style.display='flex';
+    codeHistory.unshift({title:prompt.slice(0,40),lang,code:currentCode,timestamp:new Date().toLocaleTimeString('pt-PT')});
+    if(codeHistory.length>5)codeHistory.pop();
+    renderCodeHistory();
+  }catch(e){clearInterval(int);showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+
+function renderCodeHistory(){
+  const el=document.getElementById('code-history');
+  const list=document.getElementById('code-hist-list');
+  if(!codeHistory.length){el.style.display='none';return;}
+  el.style.display='block';
+  list.innerHTML=codeHistory.map((h,i)=>`<div class="hist-item" onclick="loadCodeHistory(${i})"><span class="hist-title">${esc(h.title)}</span><span class="hist-lang">${h.lang}</span><span style="font-size:.68rem;color:#444">${h.timestamp}</span></div>`).join('');
+}
+function loadCodeHistory(i){
+  const h=codeHistory[i];currentCode=h.code;currentCodeLang={'HTML/CSS/JS':'html','Python':'py','JavaScript':'js'}[h.lang]||'txt';
+  const out=document.getElementById('code-output');
+  out.innerHTML=`<pre><code class="language-${currentCodeLang}">${esc(h.code)}</code></pre>`;
+  out.querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+  document.getElementById('code-lang-badge').textContent=h.lang;
+  document.getElementById('code-result').style.display='flex';
+}
+function copyCode(){navigator.clipboard.writeText(currentCode);showToast('Copiado!');}
+function downloadCode(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([currentCode],{type:'text/plain'}));a.download='code.'+currentCodeLang;a.click();showToast('Download iniciado!');}
+async function improveCode(){
+  if(!currentCode)return;
+  document.getElementById('code-btn').disabled=true;
+  document.getElementById('code-loading').style.display='flex';
+  document.getElementById('code-loading-text').textContent='A melhorar o código...';
+  try{
+    const reply=await callGemini([{role:'user',content:'Melhora este código: torna-o mais eficiente, mais bonito, adiciona funcionalidades úteis. Devolve o código completo melhorado.\n\n```\n'+currentCode+'\n```'}],SP_CODE);
+    const m=reply.match(/```[\w\s]*\n([\s\S]*?)```/);
+    currentCode=m?m[1]:reply;
+    const out=document.getElementById('code-output');
+    out.innerHTML=`<pre><code class="language-${currentCodeLang}">${esc(currentCode)}</code></pre>`;
+    out.querySelectorAll('pre code').forEach(b=>hljs.highlightElement(b));
+    showToast('Código melhorado!');
+  }catch(e){showToast('Erro: '+e.message);}
+  document.getElementById('code-btn').disabled=false;
+  document.getElementById('code-loading').style.display='none';
+}
+
+// ── App Generator ──────────────────────────────────────────────────────
+async function generateApp(){
+  const prompt=document.getElementById('app-prompt').value.trim();
+  if(!prompt)return;
+  const type=document.getElementById('app-type').value;
+  const btn=document.getElementById('app-btn');
+  const loading=document.getElementById('app-loading');
+  btn.disabled=true;loading.style.display='flex';
+  const texts=['A desenhar a interface...','A programar a lógica...','A finalizar...'];
+  let ti=0;const int=setInterval(()=>{document.getElementById('app-loading-text').textContent=texts[ti++%texts.length];},1500);
+  try{
+    const html=await callGemini([{role:'user',content:`Tipo: ${type}\nDescrição: ${prompt}`}],SP_APPS);
+    clearInterval(int);
+    currentAppHtml=html.replace(/```html|```/g,'').trim();
+    const preview=document.getElementById('app-preview');
+    preview.srcdoc=currentAppHtml;
+    document.getElementById('apps-input-view').style.display='none';
+    preview.style.display='block';
+    const actions=document.getElementById('app-actions');
+    actions.style.display='flex';
+  }catch(e){clearInterval(int);showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+function downloadApp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([currentAppHtml],{type:'text/html'}));a.download='app.html';a.click();showToast('Download iniciado!');}
+async function improveApp(){
+  if(!currentAppHtml)return;
+  document.getElementById('app-loading').style.display='flex';
+  document.getElementById('app-loading-text').textContent='A melhorar a app...';
+  try{
+    const improved=await callGemini([{role:'user',content:'Melhora esta app web. Adiciona mais funcionalidades, melhora o design e corrige qualquer bug. Devolve o HTML completo:\n\n'+currentAppHtml}],SP_APPS);
+    currentAppHtml=improved.replace(/```html|```/g,'').trim();
+    document.getElementById('app-preview').srcdoc=currentAppHtml;
+    showToast('App melhorada!');
+  }catch(e){showToast('Erro: '+e.message);}
+  document.getElementById('app-loading').style.display='none';
+}
+function resetApp(){
+  document.getElementById('app-preview').style.display='none';
+  document.getElementById('app-actions').style.display='none';
+  document.getElementById('apps-input-view').style.display='flex';
+  currentAppHtml='';
+}
+function showNetlifyInstructions(){
+  alert('🚀 Deploy no Netlify:\n\n1. Clica em "Download HTML"\n2. Vai a app.netlify.com/drop\n3. Arrasta o ficheiro HTML para a página\n4. A tua app fica online em segundos!');
+}
+
+// ── Slides Generator ───────────────────────────────────────────────────
+async function generateSlides(){
+  const topic=document.getElementById('slides-topic').value.trim();
+  if(!topic)return;
+  const count=document.getElementById('slides-count').value;
+  const style=document.getElementById('slides-style').value;
+  const btn=document.getElementById('slides-btn');
+  const loading=document.getElementById('slides-loading');
+  btn.disabled=true;loading.style.display='flex';
+  const texts=['A estruturar os slides...','A criar o design...','A preencher o conteúdo...'];
+  let ti=0;const int=setInterval(()=>{document.getElementById('slides-loading-text').textContent=texts[ti++%texts.length];},1500);
+  try{
+    const html=await callGemini([{role:'user',content:`Tema: ${topic}\nNúmero de slides: ${count}\nEstilo: ${style}`}],SP_SLIDES);
+    clearInterval(int);
+    currentSlidesHtml=html.replace(/```html|```/g,'').trim();
+    const preview=document.getElementById('slides-preview');
+    preview.srcdoc=currentSlidesHtml;
+    document.getElementById('slides-input-view').style.display='none';
+    preview.style.display='block';
+    const actions=document.getElementById('slides-actions');
+    actions.style.display='flex';
+  }catch(e){clearInterval(int);showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+function downloadSlides(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([currentSlidesHtml],{type:'text/html'}));a.download='slides.html';a.click();showToast('Download iniciado!');}
+function fullscreenSlides(){const w=window.open('','_blank');w.document.write(currentSlidesHtml);w.document.close();}
+async function improveSlides(){
+  if(!currentSlidesHtml)return;
+  document.getElementById('slides-loading').style.display='flex';
+  document.getElementById('slides-loading-text').textContent='A melhorar os slides...';
+  try{
+    const improved=await callGemini([{role:'user',content:'Melhora estes slides: melhora o design, adiciona mais conteúdo e corrige qualquer problema. Devolve o HTML completo:\n\n'+currentSlidesHtml}],SP_SLIDES);
+    currentSlidesHtml=improved.replace(/```html|```/g,'').trim();
+    document.getElementById('slides-preview').srcdoc=currentSlidesHtml;
+    showToast('Slides melhorados!');
+  }catch(e){showToast('Erro: '+e.message);}
+  document.getElementById('slides-loading').style.display='none';
+}
+function resetSlides(){
+  document.getElementById('slides-preview').style.display='none';
+  document.getElementById('slides-actions').style.display='none';
+  document.getElementById('slides-input-view').style.display='flex';
+  currentSlidesHtml='';
+}
+
+// ── Image Generator ────────────────────────────────────────────────────
+async function generateImage(){
+  const prompt=document.getElementById('image-prompt').value.trim();
+  if(!prompt)return;
+  const btn=document.getElementById('image-btn');
+  const loading=document.getElementById('image-loading');
+  btn.disabled=true;loading.style.display='flex';
+  document.getElementById('image-loading-text').textContent='A interpretar o pedido...';
+  try{
+    const translation=await callGemini([{role:'user',content:'Translate this to a detailed English image generation prompt, add lighting, style, mood, quality. Return ONLY the prompt: '+prompt}]);
+    const promptEN=translation+', highly detailed, 8k uhd, masterpiece, sharp focus, beautiful lighting';
+    document.getElementById('image-loading-text').textContent='A gerar imagem...';
+    const seed=Math.floor(Math.random()*999999);
+    const url='https://image.pollinations.ai/prompt/'+encodeURIComponent(promptEN)+'?width=1024&height=1024&nologo=true&enhance=true&model=flux-pro&seed='+seed;
+    // Fetch as blob to avoid Safari CORS/load issues
+    const response=await fetch(url);
+    if(!response.ok)throw new Error('Erro ao gerar imagem. Tenta novamente.');
+    const blob=await response.blob();
+    const objectUrl=URL.createObjectURL(blob);
+    document.getElementById('image-output').src=objectUrl;
+    document.getElementById('image-result').style.display='flex';
+    imageHistory.unshift(objectUrl);
+    if(imageHistory.length>6)imageHistory.pop();
+    renderImageGallery();
+  }catch(e){showToast(e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+function renderImageGallery(){
+  const el=document.getElementById('image-gallery');
+  const grid=document.getElementById('img-grid-inner');
+  if(!imageHistory.length){el.style.display='none';return;}
+  el.style.display='block';
+  grid.innerHTML=imageHistory.map(url=>`<img class="img-thumb" src="${url}" onclick="openFullscreen('${url}')" loading="lazy"/>`).join('');
+}
+function openFullscreen(url){
+  const ov=document.createElement('div');ov.className='fullscreen-overlay';
+  ov.innerHTML=`<img src="${url}"/>`;
+  ov.onclick=()=>ov.remove();
+  document.body.appendChild(ov);
+}
+function downloadImage(){
+  const src=document.getElementById('image-output').src;
+  fetch(src).then(r=>r.blob()).then(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='imagem.jpg';a.click();showToast('Download iniciado!');}).catch(()=>{window.open(src,'_blank');});
+}
+
+// ── Humanizer ──────────────────────────────────────────────────────────
+async function humanizeText(){
+  const text=document.getElementById('humanize-input').value.trim();
+  if(!text)return;
+  const intensity=document.getElementById('humanize-intensity').value;
+  const btn=document.getElementById('humanize-btn');
+  const loading=document.getElementById('humanize-loading');
+  btn.disabled=true;loading.style.display='flex';
+  document.getElementById('humanize-result').style.display='none';
+  try{
+    const chunks=chunkText(text,1500);
+    let result='';
+    for(let i=0;i<chunks.length;i++){
+      const r=await callGemini([{role:'user',content:chunks[i]}],SP_HUMANIZE(intensity));
+      result+=r+(i<chunks.length-1?'\n\n':'');
+    }
+    document.getElementById('humanize-output').textContent=result;
+    document.getElementById('humanize-result').style.display='flex';
+  }catch(e){showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+function copyHumanized(){navigator.clipboard.writeText(document.getElementById('humanize-output').textContent);showToast('Copiado!');}
+
+// ── AI Detector ────────────────────────────────────────────────────────
+async function detectAI(){
+  const text=document.getElementById('detect-input').value.trim();
+  if(!text)return;
+  const btn=document.getElementById('detect-btn');
+  const loading=document.getElementById('detect-loading');
+  btn.disabled=true;loading.style.display='flex';
+  document.getElementById('detect-result').style.display='none';
+  try{
+    const chunks=chunkText(text,2000);
+    let scores=[];let allData=null;
+    for(const chunk of chunks){
+      const raw=await callGemini([{role:'user',content:chunk}],SP_DETECT);
+      const data=parseDetector(raw);
+      scores.push(data.score);
+      if(!allData)allData=data;
+    }
+    const avgScore=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+    allData.score=avgScore;
+    allData.veredicto=avgScore<=20?'Humano':avgScore<=40?'Provavelmente Humano':avgScore<=60?'Incerto':avgScore<=80?'Provavelmente IA':'IA';
+    renderDetectorResult(allData);
+  }catch(e){showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+
+function parseDetector(text){
+  const clean=text.trim().replace(/```json|```/g,'').trim();
+  try{return JSON.parse(clean);}catch(e){}
+  try{const m=clean.match(/\{[\s\S]*\}/);if(m)return JSON.parse(m[0]);}catch(e2){}
+  return{score:50,veredicto:'Incerto',confianca:0,justificacao:['Não foi possível analisar'],trechos_suspeitos:[],padroes_ia:[],pontos_humanos:[],estilo:'Indefinido',formalidade:'Semi-formal',recomendacao:'Tenta novamente.'};
+}
+
+function renderDetectorResult(d){
+  const score=d.score||0;
+  const color=score<=30?'#22c55e':score<=60?'#f59e0b':'#ef4444';
+  const badgeColor=score<=30?'rgba(34,197,94,.15)':score<=60?'rgba(245,158,11,.15)':'rgba(239,68,68,.15)';
+  const circum=2*Math.PI*45;
+  const dash=circum-(score/100)*circum;
+  const el=document.getElementById('detect-result');
+  el.innerHTML=`
+    <div class="panel-card" style="gap:1rem">
+      <div class="detector-circle">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="45" fill="none" stroke="#1a1a1a" stroke-width="10"/>
+          <circle cx="60" cy="60" r="45" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="${circum}" stroke-dashoffset="${dash}" transform="rotate(-90 60 60)"
+            style="transition:stroke-dashoffset 1s ease"/>
+          <text x="60" y="65" text-anchor="middle" fill="${color}" font-size="22" font-weight="700" font-family="Syne">${score}%</text>
+        </svg>
+        <div class="verdict-badge" style="background:${badgeColor};color:${color};border:1px solid ${color}30">${d.veredicto||'Incerto'}</div>
+        ${d.confianca?`<div style="font-size:.72rem;color:#555">Confiança: ${d.confianca}%</div>`:''}
+      </div>
+      ${d.recomendacao?`<div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:.75rem;font-size:.8rem;color:#c4b5fd">💡 ${d.recomendacao}</div>`:''}
+      ${d.justificacao?.length?`<div class="score-section"><div class="score-title">📋 Justificação</div>${d.justificacao.map(j=>`<div class="score-item">${j}</div>`).join('')}</div>`:''}
+      ${d.padroes_ia?.length?`<div class="score-section"><div class="score-title">🤖 Padrões de IA detetados</div>${d.padroes_ia.map(p=>`<div class="score-item" style="color:#fca5a5">${p}</div>`).join('')}</div>`:''}
+      ${d.pontos_humanos?.length?`<div class="score-section"><div class="score-title">👤 Características humanas</div>${d.pontos_humanos.map(p=>`<div class="score-item" style="color:#86efac">${p}</div>`).join('')}</div>`:''}
+      ${d.trechos_suspeitos?.length?`<div class="score-section"><div class="score-title">🔍 Trechos suspeitos</div>${d.trechos_suspeitos.map(t=>`<div class="suspect-chip">"${t}"</div>`).join('')}</div>`:''}
+    </div>`;
+  el.style.display='block';
+}
+
+// ── Summarizer ─────────────────────────────────────────────────────────
+async function summarizeText(){
+  const text=document.getElementById('summarize-input').value.trim();
+  if(!text)return;
+  const btn=document.getElementById('summarize-btn');
+  const loading=document.getElementById('summarize-loading');
+  btn.disabled=true;loading.style.display='flex';
+  document.getElementById('summarize-result').style.display='none';
+  try{
+    const summary=await callGemini([{role:'user',content:text}],SP_SUMMARIZE);
+    document.getElementById('summarize-output').innerHTML=marked.parse(summary);
+    document.getElementById('summarize-result').style.display='flex';
+  }catch(e){showToast('Erro: '+e.message);}
+  btn.disabled=false;loading.style.display='none';
+}
+function copySummary(){navigator.clipboard.writeText(document.getElementById('summarize-output').textContent);showToast('Copiado!');}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function chunkText(text,size){
+  const words=text.split(' ');const chunks=[];let current='';
+  for(const w of words){
+    if((current+' '+w).trim().length>size&&current){chunks.push(current.trim());current=w;}
+    else current=(current+' '+w).trim();
+  }
+  if(current)chunks.push(current);
+  return chunks;
+}
+
+function updateCounter(inputId,counterId,max){
+  const el=document.getElementById(inputId);
+  const counter=document.getElementById(counterId);
+  const len=el.value.length;
+  counter.textContent=len.toLocaleString('pt-PT')+' / '+max.toLocaleString('pt-PT');
+  if(len>max)el.value=el.value.slice(0,max);
+}
+
+function showToast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2200);
+}
+
+// ── Tabs & Sidebar ─────────────────────────────────────────────────────
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+marked.setOptions({breaks:true,gfm:true});
+renderUserSection();
+renderConvList();
+updateLimitBanner();
+</script>
+</body>
+</html>
